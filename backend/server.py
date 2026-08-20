@@ -6,14 +6,13 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Annotated
 
 import jwt
-import requests
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, status
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from starlette.concurrency import run_in_threadpool
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 
@@ -23,15 +22,16 @@ load_dotenv(ROOT_DIR / '.env')
 # ----------------------------------------------------------------------------
 # Config
 # ----------------------------------------------------------------------------
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'munesh_properties')]
+gridfs = AsyncIOMotorGridFSBucket(db, bucket_name="media")
 
-JWT_SECRET = os.environ['JWT_SECRET']
+JWT_SECRET = os.environ.get('JWT_SECRET', 'change-me-in-production')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
-ADMIN_USERNAME = os.environ['ADMIN_USERNAME']
-ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'munesh123')
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ADMIN_PASSWORD_HASH = pwd_context.hash(ADMIN_PASSWORD)
@@ -48,57 +48,12 @@ async def get_admin_creds() -> dict:
         return {"username": doc["username"], "password_hash": doc["password_hash"]}
     return {"username": ADMIN_USERNAME, "password_hash": ADMIN_PASSWORD_HASH}
 
-# Object storage
-STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
-STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+# Media storage: files are stored in MongoDB GridFS (no external service needed)
 APP_NAME = "munesh-properties"
-_storage_key = None
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB per file
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-
-def init_storage():
-    global _storage_key
-    if _storage_key:
-        return _storage_key
-    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
-    resp.raise_for_status()
-    _storage_key = resp.json()["storage_key"]
-    return _storage_key
-
-
-def put_object(path: str, data: bytes, content_type: str) -> dict:
-    global _storage_key
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data, timeout=120,
-    )
-    if resp.status_code == 503:
-        _storage_key = None
-        key = init_storage()
-        resp = requests.put(
-            f"{STORAGE_URL}/objects/{path}",
-            headers={"X-Storage-Key": key, "Content-Type": content_type},
-            data=data, timeout=120,
-        )
-    resp.raise_for_status()
-    return resp.json()
-
-
-def get_object(path: str):
-    global _storage_key
-    key = init_storage()
-    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
-    if resp.status_code == 503:
-        _storage_key = None
-        key = init_storage()
-        resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 
 # ----------------------------------------------------------------------------
@@ -320,7 +275,9 @@ async def create_enquiry(body: EnquiryCreate):
 @api_router.get("/files/{file_path:path}")
 async def serve_file(file_path: str):
     try:
-        content, content_type = await run_in_threadpool(get_object, file_path)
+        stream = await gridfs.open_download_stream_by_name(file_path)
+        content = await stream.read()
+        content_type = (stream.metadata or {}).get("content_type", "application/octet-stream")
     except Exception as e:
         logger.error(f"file serve error {file_path}: {e}")
         raise HTTPException(status_code=404, detail="File not found")
@@ -334,18 +291,20 @@ async def serve_file(file_path: str):
 @api_router.post("/admin/upload")
 async def upload_file(file: UploadFile = File(...), admin=Depends(require_admin)):
     data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 25 MB)")
     ext = (file.filename or "file").split(".")[-1].lower()
     kind = "video" if (file.content_type or "").startswith("video") or ext in ["mp4", "mov", "webm", "m4v"] else "image"
-    path = f"{APP_NAME}/uploads/{ADMIN_USERNAME}/{uuid.uuid4()}.{ext}"
+    path = f"{APP_NAME}/uploads/{uuid.uuid4()}.{ext}"
     try:
-        result = await run_in_threadpool(put_object, path, data, file.content_type or "application/octet-stream")
-    except requests.HTTPError as e:
-        code = e.response.status_code if e.response is not None else 500
-        if code == 402:
-            raise HTTPException(status_code=402, detail="Storage credits exhausted")
+        await gridfs.upload_from_stream(
+            path, data,
+            metadata={"content_type": file.content_type or "application/octet-stream"},
+        )
+    except Exception as e:
+        logger.error(f"upload error: {e}")
         raise HTTPException(status_code=500, detail="Upload failed")
-    stored_path = result["path"]
-    return {"path": stored_path, "type": kind, "url": f"/api/files/{stored_path}"}
+    return {"path": path, "type": kind, "url": f"/api/files/{path}"}
 
 
 @api_router.post("/admin/properties", response_model=Property)
@@ -402,15 +361,26 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup():
-    try:
-        await run_in_threadpool(init_storage)
-        logger.info("Object storage initialized")
-    except Exception as e:
-        logger.error(f"Storage init failed: {e}")
-
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+# ----------------------------------------------------------------------------
+# Static frontend (Expo web build) — served when frontend/dist exists.
+# API routes above take priority; everything else falls back to index.html (SPA).
+# ----------------------------------------------------------------------------
+WEB_DIST = ROOT_DIR.parent / "frontend" / "dist"
+if WEB_DIST.is_dir():
+    app.mount("/_expo", StaticFiles(directory=WEB_DIST / "_expo"), name="expo-static")
+    if (WEB_DIST / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=WEB_DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def spa_fallback(full_path: str):
+        candidate = (WEB_DIST / full_path).resolve()
+        if full_path and candidate.is_file() and str(candidate).startswith(str(WEB_DIST.resolve())):
+            return FileResponse(candidate)
+        return FileResponse(WEB_DIST / "index.html")
+
+    logger.info("Serving web frontend from %s", WEB_DIST)
