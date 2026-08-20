@@ -36,6 +36,18 @@ ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ADMIN_PASSWORD_HASH = pwd_context.hash(ADMIN_PASSWORD)
 
+
+async def get_admin_creds() -> dict:
+    """Return current admin credentials.
+
+    Credentials changed from the admin panel are stored in MongoDB and take
+    priority. If none are stored yet, fall back to the env-var defaults.
+    """
+    doc = await db.admin_credentials.find_one({"_id": "admin"})
+    if doc:
+        return {"username": doc["username"], "password_hash": doc["password_hash"]}
+    return {"username": ADMIN_USERNAME, "password_hash": ADMIN_PASSWORD_HASH}
+
 # Object storage
 STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
 STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
@@ -108,6 +120,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangeCredentialsRequest(BaseModel):
+    current_password: str
+    new_username: Optional[str] = None
+    new_password: Optional[str] = None
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -178,13 +196,14 @@ async def require_admin(token: Annotated[Optional[str], Depends(oauth2_scheme)])
                         headers={"WWW-Authenticate": "Bearer"})
     if not token:
         raise err
+    creds = await get_admin_creds()
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("sub") != ADMIN_USERNAME or payload.get("role") != "admin":
+        if payload.get("sub") != creds["username"] or payload.get("role") != "admin":
             raise err
     except jwt.PyJWTError:
         raise err
-    return {"username": ADMIN_USERNAME, "role": "admin"}
+    return {"username": creds["username"], "role": "admin"}
 
 
 # ----------------------------------------------------------------------------
@@ -192,7 +211,8 @@ async def require_admin(token: Annotated[Optional[str], Depends(oauth2_scheme)])
 # ----------------------------------------------------------------------------
 @api_router.post("/auth/login", response_model=Token)
 async def login(body: LoginRequest):
-    valid = (body.username == ADMIN_USERNAME) and pwd_context.verify(body.password, ADMIN_PASSWORD_HASH)
+    creds = await get_admin_creds()
+    valid = (body.username == creds["username"]) and pwd_context.verify(body.password, creds["password_hash"])
     await db.login_audit.insert_one({
         "username": body.username,
         "success": valid,
@@ -200,7 +220,36 @@ async def login(body: LoginRequest):
     })
     if not valid:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-    return Token(access_token=create_access_token(ADMIN_USERNAME))
+    return Token(access_token=create_access_token(creds["username"]))
+
+
+@api_router.put("/admin/credentials", response_model=Token)
+async def change_credentials(body: ChangeCredentialsRequest, admin=Depends(require_admin)):
+    creds = await get_admin_creds()
+    if not pwd_context.verify(body.current_password, creds["password_hash"]):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    new_username = (body.new_username or "").strip() or creds["username"]
+    new_password = body.new_password or ""
+
+    if body.new_username is not None and len(new_username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    if new_password and len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+
+    new_hash = pwd_context.hash(new_password) if new_password else creds["password_hash"]
+
+    await db.admin_credentials.update_one(
+        {"_id": "admin"},
+        {"$set": {
+            "username": new_username,
+            "password_hash": new_hash,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    # Return a fresh token for the (possibly new) username so the admin stays logged in.
+    return Token(access_token=create_access_token(new_username))
 
 
 @api_router.get("/auth/me")
