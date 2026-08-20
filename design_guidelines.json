@@ -1,0 +1,148 @@
+{
+  "app_name": "Munesh Properties",
+  "personality": "1 iOS-Native Clean",
+  "personality_one_liner": "A clean, trustworthy, and content-led real estate experience that frames properties with generous spacing and highly readable typography.",
+  "color": {
+    "surface": "#FAFAFA",
+    "onSurface": "#1A1A1A",
+    "surfaceSecondary": "#FFFFFF",
+    "onSurfaceSecondary": "#1A1A1A",
+    "surfaceTertiary": "#F2F2F2",
+    "onSurfaceTertiary": "#404040",
+    "surfaceInverse": "#1A1A1A",
+    "onSurfaceInverse": "#FAFAFA",
+    "brand": "#2F4F4F",
+    "brandPrimary": "#2F4F4F",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#D2691E",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#EAEFEF",
+    "onBrandTertiary": "#2F4F4F",
+    "success": "#3E7B5B",
+    "onSuccess": "#FFFFFF",
+    "warning": "#D2691E",
+    "onWarning": "#FFFFFF",
+    "error": "#B03A2E",
+    "onError": "#FFFFFF",
+    "info": "#4A6572",
+    "onInfo": "#FFFFFF",
+    "border": "#E5E5E5",
+    "borderStrong": "#CCCCCC",
+    "divider": "#E5E5E5"
+  },
+  "typography": {
+    "displayFontFamily": "Plus Jakarta Sans",
+    "textFontFamily": "Geist",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous iOS-native padding. Use md (12pt) or lg (16pt) around core content, and xl (24pt) between distinct sections to allow the properties to breathe.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Ionicons",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Sticky header backgrounds over scrolling content",
+      "Bottom tab bar",
+      "Floating action buttons or pinned filter rows",
+      "Feature tags over property images (with tint)"
+    ],
+    "dont's": [
+      "Form fields",
+      "Body text regions",
+      "Standard list rows"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "HomeFeed",
+      "purpose": "A visually-driven feed allowing users to explore plots, homes, and shops seamlessly.",
+      "states": {
+        "loading": "Skeleton cards representing properties in the feed.",
+        "empty": "Illustration of a house with 'No properties found in this location' and a 'Clear Filters' CTA.",
+        "error": "Error message with 'Retry' CTA."
+      },
+      "layout": "Sticky glassmorphism header featuring the brand logo and location selector. Below it, a horizontally scrolling row of pill-shaped category filters (All, Plots, Homes, Land, Shops). The main content is a single-column scrolling feed of large property cards. Each card features a full-width image with a gradient-to-dark scrim at the bottom, overlaid with price and location. Important statuses like 'Sold' or 'New' are shown as tinted badges."
+    },
+    {
+      "name": "PropertyDetails",
+      "purpose": "Provides deep dive information on a property with highly visible contact actions.",
+      "states": {
+        "loading": "Spinner centered.",
+        "empty": "Fallback to 'Property Not Found'.",
+        "error": "Error loading property details with 'Retry'."
+      },
+      "layout": "Hero section is a horizontal image gallery with pagination dots, overlaid with a top glass header for the back button. Content below includes title, price, status, description, and an amenities grid. The defining feature is a persistent, fixed bottom container (using glassmorphism or solid surface) housing primary communication CTAs (WhatsApp, Call, Enquiry) allowing the user to reach out at any scroll position."
+    },
+    {
+      "name": "AdminDashboard",
+      "purpose": "Enables the admin to manage property listings and update contact details securely.",
+      "states": {
+        "loading": "Spinner centered.",
+        "empty": "Icon with 'No active listings' and a primary 'Add Property' button.",
+        "error": "Error fetching properties with 'Retry'."
+      },
+      "layout": "Tab-based or list-based view of properties with edit/delete quick actions. Floating Action Button (FAB) using glassmorphism for 'Add New Property'. A separate tab or settings row for updating global contact details. Forms use simple top-aligned labels and single-column inputs, wrapped in a KeyboardAvoidingView."
+    }
+  ],
+  "images": {
+    "hero_home": {
+      "url": "https://images.unsplash.com/photo-1723110994499-df46435aa4b3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsdXh1cnklMjBob21lJTIwZXh0ZXJpb3IlMjBpbmRpYXxlbnwwfHx8fDE3ODcyMDkzNTZ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Modern luxury home exterior in India"
+    },
+    "hero_plot": {
+      "url": "https://images.pexels.com/photos/11201060/pexels-photo-11201060.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Empty land plot real estate"
+    },
+    "hero_shop": {
+      "url": "https://images.pexels.com/photos/32367382/pexels-photo-32367382.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "alt": "Commercial shop storefront"
+    },
+    "empty_state": {
+      "url": "https://images.unsplash.com/photo-1590305427954-bfad6e2cba31?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBsdXh1cnklMjBob21lJTIwZXh0ZXJpb3IlMjBpbmRpYXxlbnwwfHx8fDE3ODcyMDkzNTZ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Abstract clean architectural corner for empty state"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the iOS-Native Clean (1) personality: generous spacing, clean readability, and no heavy UI chrome.",
+    "Do NOT use any blue, purple, or indigo shades for buttons or links. The primary brand color is a trust-building Deep Slate/Moss Green (#2F4F4F) with a Terracotta/Rust accent (#D2691E).",
+    "Implement a persistent bottom container for the Property Details screen. It must remain anchored at the bottom of the screen while the property info scrolls behind it. This container should house the WhatsApp, Call, and Enquiry buttons.",
+    "Property images in the feed MUST include a bottom gradient scrim (transparent to dark) so that overlaid text (Price, Location) is always readable regardless of the photo beneath.",
+    "Use glassmorphism (expo-blur) for the sticky top header (where the location and logo reside) and the bottom tab bar.",
+    "The admin property management screens should prioritize utility. Forms must be single column with labels above the input fields, secured with KeyboardAvoidingView.",
+    "Do NOT use emojis anywhere in the UI. Rely on Ionicons."
+  ]
+}
