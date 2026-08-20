@@ -105,6 +105,29 @@ export async function login(username: string, password: string): Promise<string>
   return data.access_token;
 }
 
+export async function changeCredentials(currentPassword: string, newUsername?: string, newPassword?: string): Promise<void> {
+  const headers = { ...(await authHeaders()), "Content-Type": "application/json" };
+  const res = await fetch(`${API}/admin/credentials`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_username: newUsername || null,
+      new_password: newPassword || null,
+    }),
+  });
+  if (!res.ok) {
+    let detail = "Failed to update credentials";
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = data.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  const data = await res.json();
+  await setToken(data.access_token);
+}
+
 export async function verifyToken(): Promise<boolean> {
   const headers = await authHeaders();
   if (!headers.Authorization) return false;
