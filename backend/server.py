@@ -376,7 +376,7 @@ if WEB_DIST.is_dir():
     if (WEB_DIST / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=WEB_DIST / "assets"), name="assets")
 
-    @app.get("/{full_path:path}")
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
     async def spa_fallback(full_path: str):
         candidate = (WEB_DIST / full_path).resolve()
         if full_path and candidate.is_file() and str(candidate).startswith(str(WEB_DIST.resolve())):
