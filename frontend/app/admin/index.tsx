@@ -24,6 +24,7 @@ import {
   updateContact,
   deleteProperty,
   deleteEnquiry,
+  changeCredentials,
   Property,
   Enquiry,
   Contact,
@@ -312,7 +313,128 @@ function SettingsTab() {
       <Pressable testID="save-contact-button" style={styles.submitBtn} onPress={save} disabled={saving}>
         {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Save Changes</Text>}
       </Pressable>
+
+      <SecuritySection />
     </KeyboardAwareScrollView>
+  );
+}
+
+function SecuritySection() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    setErr("");
+    setMsg("");
+    if (!currentPassword) {
+      setErr("Please enter your current password.");
+      return;
+    }
+    if (!newUsername.trim() && !newPassword) {
+      setErr("Enter a new username and/or a new password.");
+      return;
+    }
+    if (newUsername.trim() && newUsername.trim().length < 3) {
+      setErr("Username must be at least 3 characters.");
+      return;
+    }
+    if (newPassword && newPassword.length < 6) {
+      setErr("New password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword && newPassword !== confirmPassword) {
+      setErr("New password and confirmation do not match.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await changeCredentials(currentPassword, newUsername.trim() || undefined, newPassword || undefined);
+      setMsg("Credentials updated successfully!");
+      setCurrentPassword("");
+      setNewUsername("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e: any) {
+      setErr(e?.message || "Failed to update credentials.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View style={{ marginTop: spacing.xl }}>
+      <Text style={styles.settingsTitle}>Login &amp; Security</Text>
+      <Text style={styles.emptySub}>Change the admin username or password used to sign in.</Text>
+
+      <Text style={styles.label}>Current Password</Text>
+      <View style={styles.passRow}>
+        <TextInput
+          testID="current-password-input"
+          style={[styles.input, { flex: 1, borderWidth: 0 }]}
+          placeholder="Current password"
+          placeholderTextColor={colors.muted}
+          secureTextEntry={!show}
+          autoCapitalize="none"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+        />
+        <Pressable testID="toggle-credentials-visibility" onPress={() => setShow((s) => !s)} style={{ padding: spacing.md }}>
+          <Ionicons name={show ? "eye-off-outline" : "eye-outline"} size={20} color={colors.muted} />
+        </Pressable>
+      </View>
+
+      <Text style={styles.label}>New Username (optional)</Text>
+      <TextInput
+        testID="new-username-input"
+        style={styles.input}
+        placeholder="Leave blank to keep current username"
+        placeholderTextColor={colors.muted}
+        autoCapitalize="none"
+        value={newUsername}
+        onChangeText={setNewUsername}
+      />
+
+      <Text style={styles.label}>New Password (optional)</Text>
+      <TextInput
+        testID="new-password-input"
+        style={styles.input}
+        placeholder="Leave blank to keep current password"
+        placeholderTextColor={colors.muted}
+        secureTextEntry={!show}
+        autoCapitalize="none"
+        value={newPassword}
+        onChangeText={setNewPassword}
+      />
+
+      {!!newPassword && (
+        <>
+          <Text style={styles.label}>Confirm New Password</Text>
+          <TextInput
+            testID="confirm-password-input"
+            style={styles.input}
+            placeholder="Re-enter new password"
+            placeholderTextColor={colors.muted}
+            secureTextEntry={!show}
+            autoCapitalize="none"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+        </>
+      )}
+
+      {!!err && <Text style={styles.errText}>{err}</Text>}
+      {!!msg && <Text style={styles.savedText}>{msg}</Text>}
+
+      <Pressable testID="update-credentials-button" style={styles.submitBtn} onPress={submit} disabled={saving}>
+        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Update Credentials</Text>}
+      </Pressable>
+    </View>
   );
 }
 
