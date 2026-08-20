@@ -6,7 +6,6 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
-  ScrollView,
   Linking,
 } from "react-native";
 import { Image } from "expo-image";

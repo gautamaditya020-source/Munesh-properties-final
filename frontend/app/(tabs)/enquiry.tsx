@@ -69,7 +69,7 @@ export default function EnquiryScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <Text style={styles.headerTitle}>Enquiry Form</Text>
-        <Text style={styles.headerSub}>Share your details and we'll reach out to you</Text>
+        <Text style={styles.headerSub}>Share your details and we will reach out to you</Text>
       </View>
 
       <KeyboardAwareScrollView

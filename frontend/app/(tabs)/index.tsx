@@ -13,7 +13,7 @@ import {
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { CATEGORIES, LOCATIONS } from "@/src/constants";
@@ -23,6 +23,7 @@ import { openWhatsApp, openPhone } from "@/src/lib/communication";
 
 export default function HomeFeed() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [category, setCategory] = useState("all");
   const [location, setLocation] = useState("all");
   const [query, setQuery] = useState("");
@@ -68,9 +69,14 @@ export default function HomeFeed() {
       {/* Sticky Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.brandRow}>
-          <View style={styles.logoBox}>
+          <Pressable
+            testID="brand-logo"
+            style={styles.logoBox}
+            onLongPress={() => router.push("/admin")}
+            delayLongPress={600}
+          >
             <Ionicons name="business" size={20} color="#fff" />
-          </View>
+          </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.brandName}>Munesh Properties</Text>
             <Text style={styles.brandSub}>Plots · Homes · Land · Shops in UP</Text>

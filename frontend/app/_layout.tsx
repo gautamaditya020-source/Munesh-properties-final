@@ -42,6 +42,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FAFAFA" } }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="property/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="admin/index" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="admin/property-form" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             </Stack>
           </AuthProvider>

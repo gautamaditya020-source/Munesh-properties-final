@@ -50,13 +50,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="call-outline" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="admin"
-        options={{
-          title: "Admin",
-          tabBarIcon: ({ color, size }) => <Ionicons name="lock-closed-outline" size={size} color={color} />,
-        }}
-      />
     </Tabs>
   );
 }

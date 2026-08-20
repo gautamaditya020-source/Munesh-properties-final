@@ -6,7 +6,6 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
-  ScrollView,
   FlatList,
 } from "react-native";
 import { Image } from "expo-image";
@@ -33,6 +32,7 @@ import { resolveMediaUrl, FALLBACK_IMAGES, TYPE_LABEL } from "@/src/constants";
 /* ------------------------- Login ------------------------- */
 function LoginView() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { signIn } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -54,6 +54,14 @@ function LoginView() {
 
   return (
     <View style={styles.container}>
+      <Pressable
+        testID="admin-back-to-site"
+        style={[styles.backToSite, { top: insets.top + spacing.sm }]}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      >
+        <Ionicons name="chevron-back" size={20} color={colors.brandPrimary} />
+        <Text style={styles.backToSiteText}>Website</Text>
+      </Pressable>
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: spacing.xl, paddingTop: insets.top + spacing.xl }}
         bottomOffset={20}
@@ -308,6 +316,7 @@ function SettingsTab() {
 
 function Dashboard() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>("properties");
 
@@ -320,6 +329,13 @@ function Dashboard() {
   return (
     <View style={styles.container}>
       <View style={[styles.dashHeader, { paddingTop: insets.top + spacing.md }]}>
+        <Pressable
+          testID="admin-view-site-button"
+          style={styles.viewSiteBtn}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+        >
+          <Ionicons name="globe-outline" size={18} color={colors.brandPrimary} />
+        </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Admin Panel</Text>
           <Text style={styles.headerSub}>Munesh Properties</Text>
@@ -389,9 +405,15 @@ const styles = StyleSheet.create({
   submitText: { color: "#fff", fontWeight: "700", fontSize: font.lg },
   savedText: { color: colors.success, fontWeight: "600", marginTop: spacing.md, textAlign: "center" },
   dashHeader: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary,
+    flexDirection: "row", alignItems: "center", gap: spacing.sm, backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
+  viewSiteBtn: { width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" },
+  backToSite: {
+    position: "absolute", left: spacing.lg, zIndex: 10, flexDirection: "row", alignItems: "center", gap: 2,
+    paddingVertical: spacing.xs, paddingRight: spacing.sm,
+  },
+  backToSiteText: { color: colors.brandPrimary, fontWeight: "700", fontSize: font.base },
   headerTitle: { fontSize: font.xl, fontWeight: "800", color: colors.onSurface },
   headerSub: { fontSize: font.sm, color: colors.muted },
   logoutBtn: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FBE9E7", paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.pill },
