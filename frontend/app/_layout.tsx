@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { AuthProvider } from "@/src/context/AuthContext";
+import { LanguageProvider } from "@/src/context/LanguageContext";
 
 // Disable logbox errors etc so that users can see the app
 // and agent works as expected.
@@ -37,15 +38,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <KeyboardProvider>
-          <AuthProvider>
-            <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FAFAFA" } }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="property/[id]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="admin/index" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="admin/property-form" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-            </Stack>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <StatusBar style="dark" />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#FAFAFA" } }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="property/[id]" options={{ animation: "slide_from_right" }} />
+                <Stack.Screen name="admin/index" options={{ animation: "slide_from_right" }} />
+                <Stack.Screen name="admin/property-form" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+              </Stack>
+            </AuthProvider>
+          </LanguageProvider>
         </KeyboardProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

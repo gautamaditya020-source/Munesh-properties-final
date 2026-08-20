@@ -7,9 +7,11 @@ import { useLocalSearchParams } from "expo-router";
 
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { submitEnquiry } from "@/src/api/client";
+import { useLang } from "@/src/context/LanguageContext";
 
 export default function EnquiryScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLang();
   const params = useLocalSearchParams<{ property_id?: string; property_title?: string }>();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,7 +24,7 @@ export default function EnquiryScreen() {
   const submit = async () => {
     setErr("");
     if (!name.trim() || phone.trim().length < 8) {
-      setErr("Please enter your name and a valid phone number.");
+      setErr(t("enq.validation"));
       return;
     }
     setSubmitting(true);
@@ -37,7 +39,7 @@ export default function EnquiryScreen() {
       });
       setDone(true);
     } catch {
-      setErr("Could not send enquiry. Please try again.");
+      setErr(t("enq.failed"));
     } finally {
       setSubmitting(false);
     }
@@ -49,8 +51,8 @@ export default function EnquiryScreen() {
         <View style={styles.successIcon}>
           <Ionicons name="checkmark" size={44} color="#fff" />
         </View>
-        <Text style={styles.successTitle}>Enquiry Sent!</Text>
-        <Text style={styles.successSub}>Thank you. Munesh Properties will contact you shortly.</Text>
+        <Text style={styles.successTitle}>{t("enq.successTitle")}</Text>
+        <Text style={styles.successSub}>{t("enq.successSub")}</Text>
         <Pressable
           testID="enquiry-new-button"
           style={styles.submitBtn}
@@ -59,7 +61,7 @@ export default function EnquiryScreen() {
             setName(""); setPhone(""); setEmail(""); setMessage("");
           }}
         >
-          <Text style={styles.submitText}>Send Another</Text>
+          <Text style={styles.submitText}>{t("enq.sendAnother")}</Text>
         </Pressable>
       </View>
     );
@@ -68,8 +70,8 @@ export default function EnquiryScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={styles.headerTitle}>Enquiry Form</Text>
-        <Text style={styles.headerSub}>Share your details and we will reach out to you</Text>
+        <Text style={styles.headerTitle}>{t("enq.title")}</Text>
+        <Text style={styles.headerSub}>{t("enq.subtitle")}</Text>
       </View>
 
       <KeyboardAwareScrollView
@@ -80,36 +82,36 @@ export default function EnquiryScreen() {
         {!!params.property_title && (
           <View style={styles.propBanner}>
             <Ionicons name="home-outline" size={18} color={colors.brandPrimary} />
-            <Text style={styles.propBannerText} numberOfLines={2}>Regarding: {params.property_title}</Text>
+            <Text style={styles.propBannerText} numberOfLines={2}>{t("enq.regarding")}: {params.property_title}</Text>
           </View>
         )}
 
-        <Text style={styles.label}>Full Name *</Text>
+        <Text style={styles.label}>{t("enq.name")}</Text>
         <TextInput
           testID="enquiry-name-input"
           style={styles.input}
-          placeholder="Your name"
+          placeholder={t("enq.namePh")}
           placeholderTextColor={colors.muted}
           value={name}
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>Phone Number *</Text>
+        <Text style={styles.label}>{t("enq.phone")}</Text>
         <TextInput
           testID="enquiry-phone-input"
           style={styles.input}
-          placeholder="e.g. 98765 43210"
+          placeholder={t("enq.phonePh")}
           placeholderTextColor={colors.muted}
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
         />
 
-        <Text style={styles.label}>Email (optional)</Text>
+        <Text style={styles.label}>{t("enq.email")}</Text>
         <TextInput
           testID="enquiry-email-input"
           style={styles.input}
-          placeholder="you@example.com"
+          placeholder={t("enq.emailPh")}
           placeholderTextColor={colors.muted}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -117,11 +119,11 @@ export default function EnquiryScreen() {
           onChangeText={setEmail}
         />
 
-        <Text style={styles.label}>Message</Text>
+        <Text style={styles.label}>{t("enq.message")}</Text>
         <TextInput
           testID="enquiry-message-input"
           style={[styles.input, styles.textArea]}
-          placeholder="I'm interested in..."
+          placeholder={t("enq.messagePh")}
           placeholderTextColor={colors.muted}
           multiline
           value={message}
@@ -131,7 +133,7 @@ export default function EnquiryScreen() {
         {!!err && <Text style={styles.errText}>{err}</Text>}
 
         <Pressable testID="enquiry-submit-button" style={styles.submitBtn} onPress={submit} disabled={submitting}>
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Send Enquiry</Text>}
+          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{t("enq.submit")}</Text>}
         </Pressable>
       </KeyboardAwareScrollView>
     </View>

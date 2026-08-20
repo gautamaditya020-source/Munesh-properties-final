@@ -20,10 +20,13 @@ import { CATEGORIES, LOCATIONS } from "@/src/constants";
 import { fetchProperties, fetchContact, Property, Contact } from "@/src/api/client";
 import PropertyCard from "@/src/components/PropertyCard";
 import { openWhatsApp, openPhone } from "@/src/lib/communication";
+import { useLang } from "@/src/context/LanguageContext";
+import LanguageToggle from "@/src/components/LanguageToggle";
 
 export default function HomeFeed() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t, loc } = useLang();
   const [category, setCategory] = useState("all");
   const [location, setLocation] = useState("all");
   const [query, setQuery] = useState("");
@@ -79,8 +82,9 @@ export default function HomeFeed() {
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.brandName}>Munesh Properties</Text>
-            <Text style={styles.brandSub}>Plots · Homes · Land · Shops in UP</Text>
+            <Text style={styles.brandSub}>{t("home.brandSub")}</Text>
           </View>
+          <LanguageToggle />
           <Pressable
             testID="header-whatsapp-button"
             style={[styles.iconCircle, { backgroundColor: colors.whatsapp }]}
@@ -103,7 +107,7 @@ export default function HomeFeed() {
           <TextInput
             testID="search-input"
             style={styles.searchInput}
-            placeholder="Search by title or location"
+            placeholder={t("home.search")}
             placeholderTextColor={colors.muted}
             value={query}
             onChangeText={setQuery}
@@ -133,7 +137,7 @@ export default function HomeFeed() {
                 style={[styles.chip, active && styles.chipActive]}
               >
                 <Ionicons name={c.icon} size={15} color={active ? "#fff" : colors.onSurfaceTertiary} />
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.label}</Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(`cat.${c.key}`)}</Text>
               </Pressable>
             );
           })}
@@ -145,17 +149,17 @@ export default function HomeFeed() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.locChipRow}
         >
-          {locationChips.map((loc) => {
-            const active = location === loc;
+          {locationChips.map((locVal) => {
+            const active = location === locVal;
             return (
               <Pressable
-                key={loc}
-                testID={`location-chip-${loc}`}
-                onPress={() => setLocation(loc)}
+                key={locVal}
+                testID={`location-chip-${locVal}`}
+                onPress={() => setLocation(locVal)}
                 style={[styles.locChip, active && styles.locChipActive]}
               >
                 <Text style={[styles.locChipText, active && styles.locChipTextActive]}>
-                  {loc === "all" ? "All Locations" : loc}
+                  {locVal === "all" ? t("home.allLocations") : loc(locVal)}
                 </Text>
               </Pressable>
             );
@@ -171,9 +175,9 @@ export default function HomeFeed() {
       ) : error ? (
         <View style={styles.center}>
           <Ionicons name="cloud-offline-outline" size={48} color={colors.muted} />
-          <Text style={styles.emptyTitle}>Something went wrong</Text>
+          <Text style={styles.emptyTitle}>{t("home.error")}</Text>
           <Pressable testID="retry-button" style={styles.retryBtn} onPress={load}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t("home.retry")}</Text>
           </Pressable>
         </View>
       ) : properties.length === 0 ? (
@@ -186,14 +190,14 @@ export default function HomeFeed() {
             style={styles.emptyImg}
             contentFit="cover"
           />
-          <Text style={styles.emptyTitle}>No properties found</Text>
-          <Text style={styles.emptySub}>Try changing filters or check back soon.</Text>
+          <Text style={styles.emptyTitle}>{t("home.noProps")}</Text>
+          <Text style={styles.emptySub}>{t("home.noPropsSub")}</Text>
           <Pressable
             testID="clear-filters-button"
             style={styles.retryBtn}
             onPress={() => { setCategory("all"); setLocation("all"); setQuery(""); }}
           >
-            <Text style={styles.retryText}>Clear Filters</Text>
+            <Text style={styles.retryText}>{t("home.clearFilters")}</Text>
           </Pressable>
         </ScrollView>
       ) : (

@@ -4,8 +4,10 @@ import { Platform, StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/src/theme";
+import { useLang } from "@/src/context/LanguageContext";
 
 export default function TabsLayout() {
+  const { t } = useLang();
   return (
     <Tabs
       screenOptions={{
@@ -32,21 +34,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Properties",
+          title: t("tabs.properties"),
           tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="enquiry"
         options={{
-          title: "Enquiry",
+          title: t("tabs.enquiry"),
           tabBarIcon: ({ color, size }) => <Ionicons name="create-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="contact"
         options={{
-          title: "Contact",
+          title: t("tabs.contact"),
           tabBarIcon: ({ color, size }) => <Ionicons name="call-outline" size={size} color={color} />,
         }}
       />

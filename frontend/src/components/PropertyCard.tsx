@@ -6,10 +6,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { Property } from "@/src/api/client";
-import { resolveMediaUrl, FALLBACK_IMAGES, TYPE_LABEL } from "@/src/constants";
+import { resolveMediaUrl, FALLBACK_IMAGES } from "@/src/constants";
+import { useLang } from "@/src/context/LanguageContext";
 
 export default function PropertyCard({ property }: { property: Property }) {
   const router = useRouter();
+  const { t, loc } = useLang();
   const firstImage = property.media.find((m) => m.type === "image");
   const imageUri = firstImage ? resolveMediaUrl(firstImage.url) : FALLBACK_IMAGES[property.property_type] || FALLBACK_IMAGES.home;
   const isSold = property.status === "sold";
@@ -26,16 +28,16 @@ export default function PropertyCard({ property }: { property: Property }) {
 
         <View style={styles.badgeRow}>
           <View style={styles.typeBadge}>
-            <Text style={styles.typeBadgeText}>{TYPE_LABEL[property.property_type] || property.property_type}</Text>
+            <Text style={styles.typeBadgeText}>{t(`type.${property.property_type}`)}</Text>
           </View>
           {property.featured && !isSold && (
             <View style={[styles.typeBadge, { backgroundColor: colors.brandSecondary }]}>
-              <Text style={styles.typeBadgeText}>Featured</Text>
+              <Text style={styles.typeBadgeText}>{t("common.featured")}</Text>
             </View>
           )}
           {isSold && (
             <View style={[styles.typeBadge, { backgroundColor: colors.error }]}>
-              <Text style={styles.typeBadgeText}>Sold</Text>
+              <Text style={styles.typeBadgeText}>{t("status.sold")}</Text>
             </View>
           )}
         </View>
@@ -45,7 +47,7 @@ export default function PropertyCard({ property }: { property: Property }) {
           <Text style={styles.title} numberOfLines={1}>{property.title}</Text>
           <View style={styles.locationRow}>
             <Ionicons name="location-outline" size={13} color="#fff" />
-            <Text style={styles.location} numberOfLines={1}>{property.location}</Text>
+            <Text style={styles.location} numberOfLines={1}>{loc(property.location)}</Text>
             {!!property.area && (
               <>
                 <View style={styles.dot} />

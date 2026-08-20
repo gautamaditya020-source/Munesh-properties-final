@@ -25,6 +25,8 @@ Real estate app + website for "Munesh Properties" (Uttar Pradesh). Deals in Plot
 - Property details: image/video gallery, amenities grid, persistent bottom CTA (WhatsApp/Call/Enquiry).
 - Enquiry form with success state (keyboard-aware).
 - Contact screen with 4 highlighted channels + areas served + about.
+- Admin moved to a dedicated hidden page at /admin (removed from public tabs); reachable in-app via long-press on the home logo. Auto-logout when the admin panel is closed.
+- Bilingual UI (Hindi default + English) with in-app हि/EN toggle, persisted; location names transliterated.
 - Admin: JWT login, dashboard (Listings / Enquiries / Settings), property CRUD with image & video upload to Object Storage, editable contact details.
 - Backend APIs (public + admin) — 23/23 pytest passing. Frontend flows verified 100%.
 - 8 sample properties + default contact seeded.

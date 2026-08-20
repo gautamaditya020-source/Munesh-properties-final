@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { useAuth } from "@/src/context/AuthContext";
+import { useLang } from "@/src/context/LanguageContext";
 import {
   fetchProperties,
   fetchEnquiries,
@@ -33,6 +34,7 @@ import { resolveMediaUrl, FALLBACK_IMAGES, TYPE_LABEL } from "@/src/constants";
 function LoginView() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useLang();
   const { signIn } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +48,7 @@ function LoginView() {
     try {
       await signIn(username.trim(), password);
     } catch {
-      setErr("Incorrect username or password.");
+      setErr(t("admin.wrongCreds"));
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ function LoginView() {
         onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
       >
         <Ionicons name="chevron-back" size={20} color={colors.brandPrimary} />
-        <Text style={styles.backToSiteText}>Website</Text>
+        <Text style={styles.backToSiteText}>{t("admin.website")}</Text>
       </Pressable>
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: spacing.xl, paddingTop: insets.top + spacing.xl }}
@@ -69,10 +71,10 @@ function LoginView() {
         <View style={styles.loginLogo}>
           <Ionicons name="lock-closed" size={30} color="#fff" />
         </View>
-        <Text style={styles.loginTitle}>Admin Login</Text>
-        <Text style={styles.loginSub}>Manage listings, media & contact details</Text>
+        <Text style={styles.loginTitle}>{t("admin.login")}</Text>
+        <Text style={styles.loginSub}>{t("admin.loginSub")}</Text>
 
-        <Text style={styles.label}>Username</Text>
+        <Text style={styles.label}>{t("admin.username")}</Text>
         <TextInput
           testID="admin-username-input"
           style={styles.input}
@@ -83,7 +85,7 @@ function LoginView() {
           onChangeText={setUsername}
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t("admin.password")}</Text>
         <View style={styles.passRow}>
           <TextInput
             testID="admin-password-input"
@@ -102,7 +104,7 @@ function LoginView() {
         {!!err && <Text style={styles.errText}>{err}</Text>}
 
         <Pressable testID="admin-login-button" style={styles.submitBtn} onPress={submit} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Sign In</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{t("admin.signIn")}</Text>}
         </Pressable>
       </KeyboardAwareScrollView>
     </View>
@@ -371,7 +373,19 @@ function Dashboard() {
 }
 
 export default function AdminScreen() {
-  const { isAuthed, loading } = useAuth();
+  const { isAuthed, loading, signOut } = useAuth();
+
+  // Auto-logout when the admin panel is closed (screen unmounts / navigates back
+  // to the website). Editing a property pushes a modal ON TOP, so this screen
+  // stays mounted and the admin is NOT logged out mid-edit.
+  const stateRef = useRef({ isAuthed, signOut });
+  stateRef.current = { isAuthed, signOut };
+  useEffect(() => {
+    return () => {
+      if (stateRef.current.isAuthed) stateRef.current.signOut();
+    };
+  }, []);
+
   if (loading) {
     return <View style={[styles.container, styles.tabCenter]}><ActivityIndicator size="large" color={colors.brandPrimary} /></View>;
   }

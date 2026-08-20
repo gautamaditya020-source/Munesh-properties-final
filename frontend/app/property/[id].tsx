@@ -15,9 +15,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { resolveMediaUrl, FALLBACK_IMAGES, TYPE_LABEL } from "@/src/constants";
+import { resolveMediaUrl, FALLBACK_IMAGES } from "@/src/constants";
 import { fetchProperty, fetchContact, Property, Contact, MediaItem } from "@/src/api/client";
 import { openWhatsApp, openPhone } from "@/src/lib/communication";
+import { useLang } from "@/src/context/LanguageContext";
 
 function VideoBlock({ uri }: { uri: string }) {
   const player = useVideoPlayer(uri, (p) => {
@@ -31,6 +32,7 @@ export default function PropertyDetails() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { t, loc } = useLang();
   const [property, setProperty] = useState<Property | null>(null);
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,12 +69,12 @@ export default function PropertyDetails() {
     return (
       <View style={[styles.center, { flex: 1 }]}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.muted} />
-        <Text style={styles.emptyTitle}>Property Not Found</Text>
+        <Text style={styles.emptyTitle}>{t("details.notFound")}</Text>
         <Pressable testID="details-retry" style={styles.retryBtn} onPress={load}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t("home.retry")}</Text>
         </Pressable>
         <Pressable testID="details-back-empty" onPress={() => router.back()}>
-          <Text style={{ color: colors.brandPrimary, fontWeight: "600" }}>Go Back</Text>
+          <Text style={{ color: colors.brandPrimary, fontWeight: "600" }}>{t("details.goBack")}</Text>
         </Pressable>
       </View>
     );
@@ -133,14 +135,14 @@ export default function PropertyDetails() {
         <View style={styles.body}>
           <View style={styles.tagRow}>
             <View style={styles.typeTag}>
-              <Text style={styles.typeTagText}>{TYPE_LABEL[property.property_type] || property.property_type}</Text>
+              <Text style={styles.typeTagText}>{t(`type.${property.property_type}`)}</Text>
             </View>
             <View style={[styles.statusTag, { backgroundColor: isSold ? colors.error : colors.success }]}>
-              <Text style={styles.typeTagText}>{isSold ? "Sold" : "Available"}</Text>
+              <Text style={styles.typeTagText}>{isSold ? t("status.sold") : t("status.available")}</Text>
             </View>
             {property.featured && (
               <View style={[styles.statusTag, { backgroundColor: colors.brandSecondary }]}>
-                <Text style={styles.typeTagText}>Featured</Text>
+                <Text style={styles.typeTagText}>{t("common.featured")}</Text>
               </View>
             )}
           </View>
@@ -151,7 +153,7 @@ export default function PropertyDetails() {
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Ionicons name="location-outline" size={18} color={colors.brandPrimary} />
-              <Text style={styles.metaText}>{property.location}</Text>
+              <Text style={styles.metaText}>{loc(property.location)}</Text>
             </View>
             {!!property.area && (
               <View style={styles.metaItem}>
@@ -163,14 +165,14 @@ export default function PropertyDetails() {
 
           {!!property.description && (
             <>
-              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.sectionTitle}>{t("details.description")}</Text>
               <Text style={styles.description}>{property.description}</Text>
             </>
           )}
 
           {property.amenities.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Features & Amenities</Text>
+              <Text style={styles.sectionTitle}>{t("details.amenities")}</Text>
               <View style={styles.amenityGrid}>
                 {property.amenities.map((a, i) => (
                   <View key={i} style={styles.amenityItem}>
@@ -192,7 +194,7 @@ export default function PropertyDetails() {
           onPress={() => contact && openWhatsApp(contact.whatsapp, enquiryText)}
         >
           <Ionicons name="logo-whatsapp" size={22} color="#fff" />
-          <Text style={styles.ctaText}>WhatsApp</Text>
+          <Text style={styles.ctaText}>{t("cta.whatsapp")}</Text>
         </Pressable>
         <Pressable
           testID="cta-call"
@@ -200,7 +202,7 @@ export default function PropertyDetails() {
           onPress={() => contact && openPhone(contact.phone)}
         >
           <Ionicons name="call" size={20} color="#fff" />
-          <Text style={styles.ctaText}>Call</Text>
+          <Text style={styles.ctaText}>{t("cta.call")}</Text>
         </Pressable>
         <Pressable
           testID="cta-enquiry"
@@ -213,7 +215,7 @@ export default function PropertyDetails() {
           }
         >
           <Ionicons name="create-outline" size={20} color="#fff" />
-          <Text style={styles.ctaText}>Enquiry</Text>
+          <Text style={styles.ctaText}>{t("cta.enquiry")}</Text>
         </Pressable>
       </View>
     </View>
